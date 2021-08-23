@@ -25,8 +25,6 @@ model_names = sorted(name for name in models.__dict__
                      if name.islower() and not name.startswith("__")
                      and callable(models.__dict__[name]))
 
-print(model_names)
-
 parser = argparse.ArgumentParser(description='PyTorch ConvNet Training')
 
 parser.add_argument('--results_dir', metavar='RESULTS_DIR', default='./results',
@@ -111,7 +109,6 @@ def main():
             
             # create model for first iteration
             logging.info("creating model %s", args.model)
-            #torch.manual_seed(seed)
             model = models.__dict__[args.model]
             model_config = {'input_size': args.input_size, 'dataset': args.dataset}
         
@@ -169,24 +166,8 @@ def main():
             val_accuracies = [0] * args.epochs
             best_prec1 = 0
             
-            for layer in model.children():
-              print(layer)
-
-            for layer in model.children():
-              #if isinstance(layer, BinarizeLinear):
-              #    print('There is a BinarizeLinear layer')
-              if isinstance(layer, nn.Linear):
-                  print('There is a functional.linear layer')
-            
             for epoch in range(args.start_epoch, args.epochs):
                 optimizer = adjust_optimizer(optimizer, epoch, regime)
-
-                if epoch==0:
-                  for value in model.state_dict():
-                    if "classifier" in value:
-                      print(value)
-                      print(model.state_dict()[value])
-                      print(model.state_dict()[value].shape)
 
                 # train for one epoch
                 train_loss, train_prec1, train_prec5 = train(
@@ -266,12 +247,8 @@ def main():
             
         else:
 
-            #model = models.vgg_cifar10_binary_classifieronly()
             model = models.Small_Network(iteration)
-            #ckpt = torch.load('/content/Image_Augmentation_XNOR_Loop_CIFAR_Step_0.pt')
-            #model = load_from_ckpt(ckpt, model)
             optimizer = torch.optim.SGD(model.parameters(), lr=args.lr)
-            #optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
             criterion = nn.CrossEntropyLoss()
 
             ##############################################
@@ -279,18 +256,11 @@ def main():
 
             # Merge the training and validation virtual points and then shuffle the whole thing
 
-            #print('all inputs and targets train: ',all_inputs_and_targets_train)
-            #print(all_inputs_and_targets_train.shape)
-            #print('all inputs and targets val: ',all_inputs_and_targets_val)
-            #print(all_inputs_and_targets_val.shape)
-            all_inputs_and_targets = torch.cat((all_inputs_and_targets_train,all_inputs_and_targets_val),dim=0)
-            #print('all inputs and targets (train and val): ',all_inputs_and_targets)
-            #print(all_inputs_and_targets.shape)
-            all_inputs_and_targets=all_inputs_and_targets[torch.randperm(all_inputs_and_targets.size()[0])]
-            #print('all inputs and targets (randomized): ',all_inputs_and_targets_train)
-            nb_inputs_train = all_inputs_and_targets_train.shape[0]
-            all_inputs_and_targets_train = all_inputs_and_targets[:nb_inputs_train,:]
-            all_inputs_and_targets_val = all_inputs_and_targets[nb_inputs_train:,:]
+            #all_inputs_and_targets = torch.cat((all_inputs_and_targets_train,all_inputs_and_targets_val),dim=0)
+            #all_inputs_and_targets=all_inputs_and_targets[torch.randperm(all_inputs_and_targets.size()[0])]
+            #nb_inputs_train = all_inputs_and_targets_train.shape[0]
+            #all_inputs_and_targets_train = all_inputs_and_targets[:nb_inputs_train,:]
+            #all_inputs_and_targets_val = all_inputs_and_targets[nb_inputs_train:,:]
 
             training_accuracies = [0] * args.epochs
             training_losses = [0] * args.epochs
@@ -417,7 +387,6 @@ def main():
 
                     target = target.long()
                     output, hook = model(input)
-                    #output = model(input)
                     test_loss += criterion(output, target)
                     pred = output.data.max(1,keepdim=True)[1]
                     correct += pred.eq(target.data.view_as(pred)).cpu().sum()
@@ -624,18 +593,6 @@ def virtual_pts_generator(data_loader, model, criterion, epoch, nb_hidden_neuron
     print(' ')
         
     return activ_1, all_inputs_and_targets
-
-
-def load_from_ckpt(ckpt, model):
-      model_state_dict = ckpt["model_state_dict"]
-      new_state_dict = OrderedDict()
-      for key, value in model_state_dict.items():
-           if "classifier" in key:
-                # print(value)
-                new_state_dict[key] = value
-      # print(new_state_dict)
-      model.load_state_dict(new_state_dict)
-      return model
 
 
 if __name__ == '__main__':
