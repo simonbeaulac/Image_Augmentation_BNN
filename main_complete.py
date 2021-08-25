@@ -72,11 +72,11 @@ parser.add_argument('-e', '--evaluate', type=str, metavar='FILE',
 
 
 def main():
-    nb_hidden_neurons_1 = 512*4*4
-    nb_hidden_neurons_2 = 128
-    for iteration in range(4):
+    nb_hidden_neurons_1 = 512*4*4    # The number of neurons in the first dense layer of the VGG-16 architecture
+    nb_hidden_neurons_2 = 128        # There we are using 128 values to the inputs at each iteration, starting at iteration 2. 
+    for iteration in range(4):  
         
-        path = f'Image_Augmentation_BNN_CIFAR_August17_Step_{iteration}.pt'
+        path = f'Image_Augmentation_BNN_CIFAR_August17_Step_{iteration}.pt'   # The name of the file in which the weights are saved after training
         
         global args, best_prec1
         best_acc=0
@@ -166,6 +166,8 @@ def main():
             val_accuracies = [0] * args.epochs
             best_prec1 = 0
             
+            # Training and Validation for the first iteration (on the VGG-16 network)
+            
             for epoch in range(args.start_epoch, args.epochs):
                 optimizer = adjust_optimizer(optimizer, epoch, regime)
 
@@ -212,12 +214,12 @@ def main():
 
                 results.save()
             
-            # Load the best weights to get the virtual points
+            # Load the best weights before testing and going into the virtual_points_generator() function
             checkpoint = torch.load(path)
             model.load_state_dict(checkpoint['model_state_dict'])
             epoch=100
 
-            # Print the graphs for the 0th iteration
+            # Print the graphs for the first iteration
             plt.figure(1)
             plt.title("Loss for iteration {}".format(iteration+1))
             plt.plot([loss for loss in train_losses[:-1]], label="Training Loss") 
@@ -237,14 +239,15 @@ def main():
             print('Highest validation accuracy: ', max(val_accuracies))
             print(' ')
 
-            # evaluate on testing set
+            # Evaluate on testing set
             test_loss, test_prec1, test_prec5 = test(test_loader, model, criterion, epoch)
             print(' ')
             print('Testing loss: ', test_loss)
             print('Testing Top1 accuracy: ', test_prec1)
             print('Testting Top5 accuracy: ', test_prec5)
             print(' ')
-            
+        
+        # Every iteration starting at iteration 2
         else:
 
             model = models.Small_Network(iteration)
@@ -252,7 +255,7 @@ def main():
             criterion = nn.CrossEntropyLoss()
 
             ##############################################
-            ####### INSERT TRAINING HERE #################
+            ####### TRAINING STARTS HERE #################
 
             # Merge the training and validation virtual points and then shuffle the whole thing
 
@@ -310,7 +313,7 @@ def main():
                 training_accuracies[epoch] = acc_train
 
             ##########################################
-            ######### EVALUATION IS HERE #############
+            ######### VALIDATION STARTS HERE #############
 
                 model.eval()
                 val_loss = 0
@@ -368,7 +371,7 @@ def main():
             print('Highest validation accuracy: ', max(validation_accuracies))
             print(' ')
 
-        # Load the best weights to get the virtual points
+        # Load the best weights before testing and going into the virtual_points_generator() function
         checkpoint = torch.load(path)
         model.load_state_dict(checkpoint['model_state_dict'])
 
